@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amour - 浪漫告白生成器</title>
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Preline UI CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/preline/dist/preline.min.css" />
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 自定义样式 -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #6c5ce7;
+            --accent-color: #fdcb6e;
+            --text-color-light: #2d3436;
+            --text-color-dark: #f5f6fa;
+            --bg-color-light: #ffffff;
+            --bg-color-dark: #1a202c;
+        }
+        
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(108, 92, 231, 0.1));
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 3D球体样式 */
+        .sphere {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--accent-color), var(--primary-color), var(--secondary-color));
+            box-shadow: 0 0 30px rgba(108, 92, 231, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sphere::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 60%);
+            transform: rotate(-45deg);
+        }
+        
+        .sphere-container {
+            perspective: 800px;
+        }
+        
+        .rotating-sphere {
+            animation: rotate3d 10s infinite linear;
+            transform-style: preserve-3d;
+        }
+        
+        @keyframes rotate3d {
+            from { transform: rotateY(0deg) rotateX(10deg); }
+            to { transform: rotateY(360deg) rotateX(10deg); }
+        }
+        
+        /* 词云样式 */
+        .tag-cloud span {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .tag-cloud span:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 深色模式样式 */
+        .dark body {
+            background-color: var(--bg-color-dark);
+            color: var(--text-color-dark);
+        }
+        
+        .dark .bg-white {
+            background-color: #2d3748 !important;
+        }
+        
+        .dark .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        
+        .dark .text-gray-600 {
+            color: #cbd5e0 !important;
+        }
+        
+        .dark .border-gray-200 {
+            border-color: #4a5568 !important;
+        }
+        
+        .dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+        }
+    </style>
+    <!-- TailwindCSS 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff6b6b',
+                        secondary: '#6c5ce7',
+                        accent: '#fdcb6e',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-poppins antialiased" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' || (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) }" 
+      x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); document.documentElement.classList.toggle('dark', val); })" 
+      :class="{ 'dark bg-gray-900 text-white': darkMode, 'bg-white text-gray-800': !darkMode }">
+
+    <!-- 导航栏 -->
+    <header class="fixed w-full z-50 transition-all duration-300" :class="{ 'bg-gray-900/90 backdrop-blur-sm': darkMode, 'bg-white/90 backdrop-blur-sm shadow-md': !darkMode }">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- 品牌Logo -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-3xl font-bold gradient-text">Amour</span>
+                </div>
+                
+                <!-- 导航菜单 - 桌面版 -->
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="font-medium transition-colors duration-300" :class="{ 'text-gray-200 hover:text-white': darkMode, 'text-gray-600 hover:text-primary': !darkMode }">访问网页版</a>
+                    <a href="#" class="font-medium transition-colors duration-300" :class="{ 'text-gray-200 hover:text-white': darkMode, 'text-gray-600 hover:text-primary': !darkMode }">文档中心</a>
+                    <a href="#" class="font-medium transition-colors duration-300" :class="{ 'text-gray-200 hover:text-white': darkMode, 'text-gray-600 hover:text-primary': !darkMode }">关于我们</a>
+                    
+                    <!-- 深色模式切换 -->
+                    <button @click="darkMode = !darkMode" class="p-2 rounded-full transition-colors duration-300" :class="{ 'bg-gray-800 text-yellow-300 hover:bg-gray-700': darkMode, 'bg-gray-200 text-gray-700 hover:bg-gray-300': !darkMode }">
+                        <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                        <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </button>
+                </nav>
+                
+                <!-- 移动端菜单按钮 -->
+                <div class="md:hidden">
+                    <button type="button" class="text-gray-500 hover:text-gray-600 focus:outline-none focus:text-gray-600" aria-label="toggle menu" x-data="{ open: false }" @click="open = !open">
+                        <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        
+                        <!-- 移动端菜单 -->
+                        <div x-show="open" @click.away="open = false" class="absolute top-20 right-0 w-48 py-2 mt-2 bg-white rounded-md shadow-xl z-20" :class="{ 'bg-gray-800': darkMode, 'bg-white': !darkMode }">
+                            <a href="#" class="block px-4 py-2 text-sm" :class="{ 'text-gray-200 hover:bg-gray-700': darkMode, 'text-gray-700 hover:bg-gray-100': !darkMode }">访问网页版</a>
+                            <a href="#" class="block px-4 py-2 text-sm" :class="{ 'text-gray-200 hover:bg-gray-700': darkMode, 'text-gray-700 hover:bg-gray-100': !darkMode }">文档中心</a>
+                            <a href="#" class="block px-4 py-2 text-sm" :class="{ 'text-gray-200 hover:bg-gray-700': darkMode, 'text-gray-700 hover:bg-gray-100': !darkMode }">关于我们</a>
+                            <div class="border-t border-gray-200 my-2" :class="{ 'border-gray-700': darkMode }"></div>
+                            <button @click="darkMode = !darkMode" class="w-full text-left block px-4 py-2 text-sm" :class="{ 'text-gray-200 hover:bg-gray-700': darkMode, 'text-gray-700 hover:bg-gray-100': !darkMode }">
+                                <span x-show="!darkMode">切换到深色模式</span>
+                                <span x-show="darkMode">切换到浅色模式</span>
+                            </button>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 首屏视觉区 -->
+    <section class="pt-28 pb-20 md:pt-36 md:pb-24 hero-gradient overflow-hidden" :class="{ 'bg-gray-800/30': darkMode }">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="md:w-1/2 mb-10 md:mb-0 animate-fade-in">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                        <span class="gradient-text">Amour</span>
+                        <span class="block mt-2">浪漫告白生成器</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl mb-8 italic" :class="{ 'text-gray-300': darkMode, 'text-gray-600': !darkMode }">
+                        爱是唯一一种当你分享它时会翻倍的东西。
+                    </p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <a href="#features" class="btn px-8 py-3 rounded-full font-medium text-white bg-gradient-to-r from-primary to-secondary hover:shadow-lg transform transition hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 text-center">
+                            开始体验
+                        </a>
+                        <a href="#about" class="btn px-8 py-3 rounded-full font-medium border-2 text-center transition" :class="{ 'border-gray-600 text-gray-300 hover:bg-gray-700': darkMode, 'border-gray-300 text-gray-700 hover:bg-gray-100': !darkMode }">
+                            了解更多
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="md:w-1/2 flex justify-center animate-fade-in">
+                    <div class="sphere-container">
+                        <div class="sphere rotating-sphere animate-pulse-slow">
+                            <!-- 3D球体效果 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 功能介绍区 -->
+    <section id="features" class="py-20" :class="{ 'bg-gray-900': darkMode, 'bg-gray-50': !darkMode }">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 animate-fade-in">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">浪漫告白，一键生成</h2>
+                <p class="max-w-2xl mx-auto text-lg" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">
+                    通过AI技术，为您量身定制一个流光溢彩的3D球体，点击后展现专属于您的浪漫告白。
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <!-- 功能展示 - 左侧 -->
+                <div class="animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden card-hover transition-all duration-300" :class="{ 'bg-gray-800 shadow-gray-700/30': darkMode }">
+                        <div class="p-8">
+                            <div class="flex items-start mb-6">
+                                <div class="flex-shrink-0 bg-primary/10 p-3 rounded-full">
+                                    <i class="fas fa-comment-dots text-primary text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-xl font-semibold mb-2">智能对话</h3>
+                                    <p :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">
+                                        像微信聊天一样，简单输入您的关键词、姓名或昵称，AI将为您创造专属浪漫。
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- 聊天界面模拟 -->
+                            <div class="border rounded-xl p-4 mb-4" :class="{ 'border-gray-700': darkMode, 'border-gray-200': !darkMode }">
+                                <div class="flex items-start mb-4">
+                                    <div class="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center" :class="{ 'bg-gray-700': darkMode }">
+                                        <i class="fas fa-robot text-sm" :class="{ 'text-gray-500': darkMode, 'text-gray-600': !darkMode }"></i>
+                                    </div>
+                                    <div class="ml-3 bg-gray-100 rounded-lg p-3 max-w-xs" :class="{ 'bg-gray-700': darkMode, 'bg-gray-100': !darkMode }">
+                                        <p class="text-sm">你好！请告诉我一些关键词，我将为你创造一个浪漫的告白。</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start justify-end mb-4">
+                                    <div class="mr-3 bg-primary/10 rounded-lg p-3 max-w-xs">
+                                        <p class="text-sm">星空 思念 未来</p>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white">
+                                        <span class="text-xs">你</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start mb-4">
+                                    <div class="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center" :class="{ 'bg-gray-700': darkMode, 'bg-gray-300': !darkMode }">
+                                        <i class="fas fa-robot text-sm" :class="{ 'text-gray-500': darkMode, 'text-gray-600': !darkMode }"></i>
+                                    </div>
+                                    <div class="ml-3 bg-gray-100 rounded-lg p-3 max-w-xs" :class="{ 'bg-gray-700': darkMode, 'bg-gray-100': !darkMode }">
+                                        <p class="text-sm">正在生成你的专属告白球体...</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- 输入框 -->
+                                <div class="flex mt-4">
+                                    <input type="text" placeholder="输入关键词、姓名或昵称..." class="flex-grow px-4 py-2 rounded-l-lg border focus:outline-none focus:ring-2 focus:ring-primary" :class="{ 'bg-gray-700 border-gray-600 text-white': darkMode, 'bg-white border-gray-300': !darkMode }">
+                                    <button class="px-4 py-2 bg-primary text-white rounded-r-lg hover:bg-primary/90 transition">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 功能展示 - 右侧 -->
+                <div class="animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden card-hover transition-all duration-300" :class="{ 'bg-gray-800 shadow-gray-700/30': darkMode }">
+                        <div class="p-8">
+                            <div class="flex items-start mb-6">
+                                <div class="flex-shrink-0 bg-secondary/10 p-3 rounded-full">
+                                    <i class="fas fa-magic text-secondary text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-xl font-semibold mb-2">词云灵感</h3>
+                                    <p :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">
+                                        提供丰富的词云参考，帮助您表达出最真挚的情感。
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- 词云展示 -->
+                            <div class="tag-cloud text-center p-6 border rounded-xl" :class="{ 'border-gray-700': darkMode, 'border-gray-200': !darkMode }">
+                                <span class="bg-pink-100 text-pink-800 text-sm" :class="{ 'bg-pink-900/30 text-pink-300': darkMode }">温柔</span>
+                                <span class="bg-blue-100 text-blue-800 text-lg" :class="{ 'bg-blue-900/30 text-blue-300': darkMode }">浪漫</span>
+                                <span class="bg-purple-100 text-purple-800 text-base" :class="{ 'bg-purple-900/30 text-purple-300': darkMode }">思念</span>
+                                <span class="bg-yellow-100 text-yellow-800 text-xl" :class="{ 'bg-yellow-900/30 text-yellow-300': darkMode }">甜蜜</span>
+                                <span class="bg-green-100 text-green-800 text-sm" :class="{ 'bg-green-900/30 text-green-300': darkMode }">未来</span>
+                                <span class="bg-red-100 text-red-800 text-lg" :class="{ 'bg-red-900/30 text-red-300': darkMode }">热烈</span>
+                                <span class="bg-indigo-100 text-indigo-800 text-base" :class="{ 'bg-indigo-900/30 text-indigo-300': darkMode }">深情</span>
+                                <span class="bg-orange-100 text-orange-800 text-sm" :class="{ 'bg-orange-900/30 text-orange-300': darkMode }">阳光</span>
+                                <span class="bg-teal-100 text-teal-800 text-xl" :class="{ 'bg-teal-900/30 text-teal-300': darkMode }">星空</span>
+                                <span class="bg-pink-100 text-pink-800 text-lg" :class="{ 'bg-pink-900/30 text-pink-300': darkMode }">心动</span>
+                                <span class="bg-blue-100 text-blue-800 text-base" :class="{ 'bg-blue-900/30 text-blue-300': darkMode }">诗意</span>
+                                <span class="bg-purple-100 text-purple-800 text-sm" :class="{ 'bg-purple-900/30 text-purple-300': darkMode }">清新</span>
+                                <span class="bg-yellow-100 text-yellow-800 text-base" :class="{ 'bg-yellow-900/30 text-yellow-300': darkMode }">期待</span>
+                                <span class="bg-green-100 text-green-800 text-lg" :class="{ 'bg-green-900/30 text-green-300': darkMode }">真挚</span>
+                                <span class="bg-red-100 text-red-800 text-sm" :class="{ 'bg-red-900/30 text-red-300': darkMode }">激情</span>
+                            </div>
+                            
+                            <!-- 3D球体展示 -->
+                            <div class="mt-6 flex justify-center">
+                                <div class="relative">
+                                    <div class="sphere-container">
+                                        <div class="sphere rotating-sphere" style="width: 120px; height: 120px;"></div>
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <p class="text-sm font-medium" :class="{ 'text-gray-300': darkMode, 'text-gray-700': !darkMode }">点击球体，展现专属告白</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 示例展示 -->
+            <div class="mt-20 text-center animate-fade-in">
+                <h3 class="text-2xl font-bold mb-8">告白盲盒示例</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 示例1 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover" :class="{ 'bg-gray-800 shadow-gray-700/30': darkMode }">
+                        <div class="mb-4 text-primary">
+                            <i class="fas fa-quote-left text-3xl opacity-50"></i>
+                        </div>
+                        <p class="mb-4 italic" :class="{ 'text-gray-300': darkMode, 'text-gray-600': !darkMode }">
+                            如果星空是我们的见证，那么每一颗星星都记录着我对你的思念，期待与你共赴未来的每一天。
+                        </p>
+                        <div class="flex justify-end">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                                <i class="fas fa-star text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 示例2 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover" :class="{ 'bg-gray-800 shadow-gray-700/30': darkMode }">
+                        <div class="mb-4 text-secondary">
+                            <i class="fas fa-quote-left text-3xl opacity-50"></i>
+                        </div>
+                        <p class="mb-4 italic" :class="{ 'text-gray-300': darkMode, 'text-gray-600': !darkMode }">
+                            你的笑容如春日里的第一缕阳光，温暖了我的整个世界，愿时光能把我们的爱意酿成甜蜜的蜜糖。
+                        </p>
+                        <div class="flex justify-end">
+                            <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                                <i class="fas fa-sun text-secondary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 示例3 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover" :class="{ 'bg-gray-800 shadow-gray-700/30': darkMode }">
+                        <div class="mb-4 text-accent">
+                            <i class="fas fa-quote-left text-3xl opacity-50"></i>
+                        </div>
+                        <p class="mb-4 italic" :class="{ 'text-gray-300': darkMode, 'text-gray-600': !darkMode }">
+                            在这个世界的角落里，我找到了最珍贵的宝藏，那就是与你相遇的每一刻，愿我们的故事如诗如画，细水长流。
+                        </p>
+                        <div class="flex justify-end">
+                            <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                                <i class="fas fa-heart text-accent"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于我们区域 -->
+    <section id="about" class="py-20" :class="{ 'bg-gray-800': darkMode, 'bg-white': !darkMode }">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 animate-fade-in">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">关于我们</h2>
+                <p class="max-w-2xl mx-auto text-lg" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">
+                    专注于利用人工智能技术为用户提供高效、个性化情绪价值的创新型企业
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <!-- 品牌简介 -->
+                <div class="animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden card-hover p-8" :class="{ 'bg-gray-900 shadow-gray-700/30': darkMode }">
+                        <div class="flex items-start mb-6">
+                            <div class="flex-shrink-0 bg-primary/10 p-3 rounded-full">
+                                <i class="fas fa-building text-primary text-2xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-xl font-semibold mb-2">品牌简介</h3>
+                                <p :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }" class="mb-4">
+                                    Amour 是一家专注于利用人工智能技术为用户提供高效、个性化情绪价值的创新型企业。我们致力于通过先进的AI算法和专业的设计团队，为每一位客户提供情绪价值。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 团队介绍 -->
+                <div class="animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden card-hover p-8" :class="{ 'bg-gray-900 shadow-gray-700/30': darkMode }">
+                        <div class="flex items-start mb-6">
+                            <div class="flex-shrink-0 bg-secondary/10 p-3 rounded-full">
+                                <i class="fas fa-users text-secondary text-2xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-xl font-semibold mb-2">团队介绍</h3>
+                                <p :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }" class="mb-4">
+                                    我们的团队由资深设计师、AI工程师组成，他们凭借丰富的经验和创新思维，为每一位客户提供卓越的体验。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 底部信息区 -->
+    <footer class="py-10" :class="{ 'bg-gray-900': darkMode, 'bg-gray-100': !darkMode }">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 关于我们 -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">关于我们</h4>
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl font-bold gradient-text">Amour</span>
+                    </div>
+                    <p class="text-sm mb-4" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">
+                        专注于利用人工智能技术为用户提供高效、个性化情绪价值的创新型企业。
+                    </p>
+                </div>
+                
+                <!-- 联系我们 -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">联系我们</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-phone-alt mr-2 text-primary"></i>
+                            <span class="text-sm" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">随处可见</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2 text-primary"></i>
+                            <span class="text-sm" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">无处不在</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- 快速链接 -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="text-sm hover:text-primary transition-colors duration-300" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">访问网页版</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-sm hover:text-primary transition-colors duration-300" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">文档中心</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-sm hover:text-primary transition-colors duration-300" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">关于我们</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t mt-8 pt-8 text-center" :class="{ 'border-gray-800': darkMode, 'border-gray-200': !darkMode }">
+                <p class="text-sm" :class="{ 'text-gray-400': darkMode, 'text-gray-600': !darkMode }">
+                    © Amour，保留所有权利。
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 模态框 - 告白内容展示 -->
+    <div x-data="{ showModal: false, message: '' }" @keydown.escape.window="showModal = false">
+        <!-- 模态框触发 -->
+        <div @click="showModal = true; message = '在星空下，我想对你说，无论未来多远，我的思念都会追随着你，就像星星追随着月亮，永不停息。'" class="cursor-pointer">
+            <!-- 这里是空的，用于球体点击事件 -->
+        </div>
+        
+        <!-- 模态框 -->
+        <div x-show="showModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 transition-opacity" @click="showModal = false">
+                    <div class="absolute inset-0 bg-black opacity-50"></div>
+                </div>
+                
+                <div class="relative bg-white rounded-lg max-w-md w-full p-8 overflow-hidden shadow-xl transform transition-all" :class="{ 'bg-gray-800': darkMode }">
+                    <div class="absolute top-0 right-0 pt-4 pr-4">
+                        <button type="button" @click="showModal = false" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="mb-6">
+                            <div class="mx-auto w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                                <i class="fas fa-heart text-primary text-2xl animate-pulse-slow"></i>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold mb-4 gradient-text">专属告白</h3>
+                        <p class="text-lg italic mb-6" :class="{ 'text-gray-300': darkMode, 'text-gray-600': !darkMode }" x-text="message"></p>
+                        
+                        <div class="flex justify-center space-x-4">
+                            <button @click="showModal = false" class="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary/90 transition">
+                                收藏此刻
+                            </button>
+                            <button @click="showModal = false" class="px-6 py-2 border rounded-full transition" :class="{ 'border-gray-600 text-gray-300 hover:bg-gray-700': darkMode, 'border-gray-300 text-gray-700 hover:bg-gray-100': !darkMode }">
+                                再来一次
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Preline UI JS -->
+    <script src="https://cdn.jsdelivr.net/npm/preline/dist/preline.js"></script>
+    
+    <!-- 自定义脚本 -->
+    <script>
+        // 为所有球体添加点击事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const spheres = document.querySelectorAll('.sphere');
+            spheres.forEach(sphere => {
+                sphere.addEventListener('click', function() {
+                    // 触发模态框显示
+                    const event = new CustomEvent('showModal', {
+                        detail: {
+                            message: '在星空下，我想对你说，无论未来多远，我的思念都会追随着你，就像星星追随着月亮，永不停息。'
+                        }
+                    });
+                    window.dispatchEvent(event);
+                });
+            });
+            
+            // 监听自定义事件
+            window.addEventListener('showModal', function(e) {
+                const alpineData = document.querySelector('[x-data*="showModal"]').__x;
+                if (alpineData) {
+                    alpineData.$data.showModal = true;
+                    if (e.detail && e.detail.message) {
+                        alpineData.$data.message = e.detail.message;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
